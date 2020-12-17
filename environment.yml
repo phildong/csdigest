@@ -13,5 +13,6 @@ dependencies:
   - black
   - h5py=2
   - pillow
+  - pip
   - pip:
       - slack-sdk
