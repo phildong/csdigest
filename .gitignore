@@ -11,6 +11,9 @@ cache
 # output
 /*.html
 
+# dataset used to train the network
+food-5k
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

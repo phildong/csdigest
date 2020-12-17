@@ -1,0 +1,17 @@
+name: digest
+channels:
+  - conda-forge
+dependencies:
+  - beautifulsoup4
+  - tensorflow
+  - keras
+  - python
+  - pandas
+  - requests
+  - scikit-learn
+  - ipykernel
+  - black
+  - h5py=2
+  - pillow
+  - pip:
+      - slack-sdk
