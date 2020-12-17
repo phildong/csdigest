@@ -72,7 +72,7 @@
   height: 40px;
   font-size: 30px;
   color: #fff;
-  background: rgba(255, 255, 255, 0.32);
+  background: rgba(0, 0, 0, 0.32);
   text-shadow: none;
   padding: 5px;
 }
@@ -120,8 +120,29 @@
   background-position: center center;
 }
 
-.carousel-slider .carousel-announce_two {
-  background: url(../../../assets/onepage/img/slider/announcement2.jpg);
+.carousel-slider .carousel-announce-two {
+  background: url(../../../assets/onepage/img/slider/announcement2.svg);
+  background-size: cover;
+  background-position: center center;
+}
+
+.carousel-slider .carousel-tada-1 {
+  background: url(../../../assets/onepage/img/slider/tada1.svg);
+  background-size: cover;
+  background-position: center center;
+}
+.carousel-slider .carousel-tada-2 {
+  background: url(../../../assets/onepage/img/slider/tada2.svg);
+  background-size: cover;
+  background-position: center center;
+}
+.carousel-slider .carousel-tada-3 {
+  background: url(../../../assets/onepage/img/slider/tada3.svg);
+  background-size: cover;
+  background-position: center center;
+}
+.carousel-slider .carousel-birthday {
+  background: url(../../../assets/onepage/img/slider/birthday.svg);
   background-size: cover;
   background-position: center center;
 }
@@ -362,6 +383,7 @@
   font: 400 20px/1.4 "PT Sans Narrow", Arial, sans-serif;
   background: rgba(0, 0, 0, 0.67);
   padding: 25px;
+  max-width: 1300px;
 }
 
 .carousel-slider .promo-like-text h2 {

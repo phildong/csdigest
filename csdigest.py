@@ -1,17 +1,19 @@
 #%%
 # imports
+import copy
+import itertools as itt
 import os
-import requests
-
-import pandas as pd
 import re
-import yaml
+
 import numpy as np
+import pandas as pd
+import requests
+import yaml
 from bs4 import BeautifulSoup
-from slack_sdk import WebClient
-from scipy.spatial.distance import pdist, squareform
 from scipy.sparse.csgraph import connected_components
+from scipy.spatial.distance import pdist, squareform
 from sklearn.feature_extraction.text import CountVectorizer
+from slack_sdk import WebClient
 
 
 #%%
@@ -32,7 +34,6 @@ class CSDigest:
             self.client.conversations_list()["channels"]
         ).set_index("name")
         self.users = pd.DataFrame(self.client.users_list()["members"]).set_index("id")
-        # self.files = pd.DataFrame(self.client.files_list()["files"])
         ms_general = pd.DataFrame(
             self.client.conversations_history(
                 channel=self.channels.loc["general"]["id"]
@@ -50,10 +51,10 @@ class CSDigest:
         ms_general["channel"] = self.channels.loc["general"]["id"]
         ms_tada = ms_general[ms_general["class"] == "tada"]
         ms_tada["permalink"] = ms_tada.apply(self.get_permalink, axis="columns")
-        print(ms_tada)
         ms_files = self.ms_general[self.ms_general["files"].notnull()]
         ms_files["file_path"] = ms_files.apply(self.download_images, axis="columns")
         self.ms_files = ms_files
+        self.build_carousel(ms_tada)
 
     def classify_msg(self, msg_df):
         if msg_df["reactions"]:
@@ -118,8 +119,45 @@ class CSDigest:
                 fpaths.append(fpath)
         return fpaths
 
+    def build_carousel(self, msg_df):
+        indicator = self.temp.find("ol", class_="carousel-indicators")
+        ind_temp = indicator.find("li").extract()
+        sld_wrapper = self.temp.find("div", class_="carousel-inner")
+        tada_temp = self.temp.find("div", class_="carousel-tada-1").extract()
+        for (imsg, msg), icss in zip(
+            msg_df.reset_index(drop=True).iterrows(), itt.cycle(np.arange(3) + 1)
+        ):
+            cur_ind = copy.copy(ind_temp)
+            cur_ind["data-slide-to"] = str(imsg)
+            cur_tada = copy.copy(tada_temp)
+            cur_tada.find("h3").string = msg["text"]
+            cur_tada.find(True, string="tada_author").string = msg["user"]
+            cur_tada.find("a")["href"] = msg["permalink"]
+            if re.search("birthday", msg["text"].lower()):
+                cur_tada["class"] = [
+                    "carousel-birthday" if c == "carousel-tada-1" else c
+                    for c in cur_tada["class"]
+                ]
+            else:
+                cur_tada["class"] = [
+                    "carousel-tada-{}".format(icss) if c == "carousel-tada-1" else c
+                    for c in cur_tada["class"]
+                ]
+            if not imsg == 0:
+                del cur_ind["class"]
+                cur_tada["class"] = list(
+                    filter(lambda c: c != "active", cur_tada["class"])
+                )
+            indicator.append(cur_ind)
+            sld_wrapper.append(cur_tada)
+
+    def write_html(self):
+        with open("csdigest.html", "w") as outf:
+            outf.write(str(self.temp))
+
 
 #%%
 # main
 if __name__ == "__main__":
     digest = CSDigest("config.yml")
+    digest.write_html()
