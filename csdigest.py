@@ -251,7 +251,7 @@ class CSDigest:
             sld_wrapper.append(cur_tada)
 
     def write_html(self):
-        with open("csdigest.html", "w") as outf:
+        with open("csdigest.html", "w", encoding='utf-8') as outf:
             outf.write(str(self.temp))
 
     def classify_food(self, img_path):
