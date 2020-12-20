@@ -111,14 +111,19 @@ Purchase Premium Metronic Admin Theme: http://themeforest.net/item/metronic-resp
         style="margin-top: 60px"
       >
         <!-- Indicators -->
-        <ol class="carousel-indicators">
-          <li data-target="#carousel" data-slide-to="0" class="active"></li>
+        <ol class="carousel-indicators" id="carousel-inds">
+          <li
+            data-target="#carousel"
+            data-slide-to="0"
+            class="active"
+            id="carousel-ind-template"
+          ></li>
         </ol>
 
         <!-- Wrapper for slides -->
-        <div class="carousel-inner" role="listbox">
+        <div class="carousel-inner" role="listbox" id="carousel-slides">
           <!-- tada template -->
-          <div class="item carousel-tada-1 active">
+          <div class="item carousel-tada-1 active" id="carousel-slide-template">
             <div class="center-block">
               <div class="center-block-wrap">
                 <div class="center-block-body">
@@ -126,10 +131,15 @@ Purchase Premium Metronic Admin Theme: http://themeforest.net/item/metronic-resp
                     <a class="promo-like-text" href="permalink">
                       <h3
                         class="margin-bottom-20 animate-delay carousel-title-v2"
+                        id="carousel-slide-message"
                       >
-                        tada_message
+                        There will always be more stuff to celebrate!
                       </h3>
-                      <span class="carousel-subtitle-v1">tada_author</span>
+                      <span
+                        class="carousel-subtitle-v1"
+                        id="carousel-slide-author"
+                        >@phild</span
+                      >
                     </a>
                   </div>
                 </div>
@@ -173,7 +183,9 @@ Purchase Premium Metronic Admin Theme: http://themeforest.net/item/metronic-resp
           />
           <div class="valign-center hover-block">
             <div class="valign-center-elem">
-              <strong id="port-item-text">London City Project</strong>
+              <strong id="port-item-text"
+                >This is apparently not food. There will be more!</strong
+              >
               <a
                 href="assets/onepage/img/portfolio/2.jpg"
                 class="zoom"
@@ -208,12 +220,11 @@ Purchase Premium Metronic Admin Theme: http://themeforest.net/item/metronic-resp
               <a id="quote-link">
                 <blockquote>
                   <p id="quote-content">
-                    This is the most awesome, full featured, easy, costomizeble
-                    theme. It’s extremely responsive and very helpful to all
-                    suggestions.
+                    This is a fake quotable quote where no recent quotes are
+                    quotable.
                   </p>
                 </blockquote>
-                <span class="testimonials-name" id="quote-name">Mark Doe</span>
+                <span class="testimonials-name" id="quote-name">@phild</span>
               </a>
             </div>
           </div>

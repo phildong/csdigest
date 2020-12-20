@@ -14,5 +14,7 @@ dependencies:
   - h5py=2
   - pillow
   - pip
+  - emoji
+  - dateparser
   - pip:
       - slack-sdk

@@ -4,13 +4,13 @@ import copy
 import itertools as itt
 import os
 import re
-import bs4
 
 import numpy as np
 import pandas as pd
 import requests
 import tensorflow as tf
 import yaml
+import dateparser
 from bs4 import BeautifulSoup
 from emoji import emojize
 from keras import models
@@ -34,60 +34,71 @@ class CSDigest:
             self.temp = BeautifulSoup(tp, "html.parser")
         self.cache_im = os.path.join("cache", "images")
         os.makedirs(self.cache_im, exist_ok=True)
+        self.ts_old = dateparser.parse(config["time_span"]).timestamp()
         # initialize objects
         self.foodnet = models.load_model("./foodnet/model")
         self.datagen = ImageDataGenerator(rescale=1.0 / 255)
         self.client = WebClient(token=self.token)
         self.channels = pd.DataFrame(
-            self.client.conversations_list()["channels"]
+            self.client.conversations_list(limit=1000)["channels"]
         ).set_index("name")
-        self.users = pd.DataFrame(self.client.users_list()["members"]).set_index("id")
+        self.users = pd.DataFrame(
+            self.client.users_list(limit=1000)["members"]
+        ).set_index("id")
         self.users["display_name"] = self.users["profile"].apply(
             self.extract_profile, key="display_name"
         )
-        # handle general channel
-        ms_general = self.get_msg("general")
-        ms_general["class"] = ms_general.apply(self.classify_msg, axis="columns")
-        # handle homesanity channel
+        # get messages
+        ms_general = self.get_msg("general", same_user=False)
         ms_home = self.get_msg("homesanity", ts_thres=0)
-        # handle quotablequotes
         ms_quote = self.get_msg("quotablequotes", ts_thres=120, same_user=False)
-        ms_quote = ms_quote[~ms_quote["files"].astype(bool)]
         # handle carousel
-        ms_tada = ms_general[ms_general["class"] == "tada"]
-        ms_tada["permalink"] = ms_tada.apply(self.get_permalink, axis="columns")
-        self.build_carousel(ms_tada)
+        if len(ms_general) > 0:
+            ms_general["class"] = ms_general.apply(self.classify_msg, axis="columns")
+            ms_tada = ms_general[ms_general["class"] == "tada"]
+            if len(ms_tada) > 0:
+                ms_tada["permalink"] = ms_tada.apply(self.get_permalink, axis="columns")
+                self.build_carousel(ms_tada)
         # handle food
         ms_files = pd.concat([ms_general, ms_home])
-        ms_files["file_path"] = ms_files.apply(self.download_images, axis="columns")
-        ms_files = ms_files[ms_files["file_path"].astype(bool)]
-        ms_files["food_prob"] = ms_files["file_path"].apply(self.classify_food)
-        ms_files["food_path"] = ms_files.apply(self.filter_food, axis="columns")
-        ms_food = ms_files[ms_files["food_path"].notnull()]
-        ms_food["permalink"] = ms_food.apply(self.get_permalink, axis="columns")
-        ms_food["aspect"] = ms_food["food_path"].apply(self.get_img_aspect)
-        ms_food = ms_food.sort_values("aspect", ascending=True)
-        self.build_portfolio(ms_food)
+        if len(ms_files) > 0:
+            ms_files["file_path"] = ms_files.apply(self.download_images, axis="columns")
+            ms_files = ms_files[ms_files["file_path"].astype(bool)]
+            ms_files["food_prob"] = ms_files["file_path"].apply(self.classify_food)
+            ms_files["food_path"] = ms_files.apply(self.filter_food, axis="columns")
+            ms_food = ms_files[ms_files["food_path"].notnull()]
+            ms_food["permalink"] = ms_food.apply(self.get_permalink, axis="columns")
+            ms_food["aspect"] = ms_food["food_path"].apply(self.get_img_aspect)
+            ms_food = ms_food.sort_values("aspect", ascending=True)
+            self.build_portfolio(ms_food)
         # handle quotes
-        ms_quote["permalink"] = ms_quote.apply(self.get_permalink, axis="columns")
-        self.build_quotes(ms_quote)
+        if len(ms_quote) > 0:
+            ms_quote = ms_quote[~ms_quote["files"].astype(bool)]
+            ms_quote["permalink"] = ms_quote.apply(self.get_permalink, axis="columns")
+            self.build_quotes(ms_quote)
 
     def get_msg(self, channel, ts_thres=5, same_user=True):
         ms = pd.DataFrame(
-            self.client.conversations_history(channel=self.channels.loc[channel]["id"])[
-                "messages"
-            ]
+            self.client.conversations_history(
+                channel=self.channels.loc[channel]["id"],
+                oldest=self.ts_old,
+                limit=1000,
+            )["messages"]
         )
-        ms = ms[ms["subtype"].isnull()]
-        ms = (
-            self.cluster_msg(ms, ts_thres=ts_thres, same_user=same_user)
-            .groupby("component")
-            .apply(self.merge_msg)
-            .reset_index()
-            .apply(self.translate_msg_user, axis="columns")
-        )
-        ms["text"] = ms["text"].apply(emojize, use_aliases=True, variant="emoji_type")
-        ms["channel"] = self.channels.loc[channel]["id"]
+        if len(ms) > 0:
+            ms = ms[ms["subtype"].isnull()]
+            if len(ms) > 0:
+                ms = (
+                    self.cluster_msg(ms, ts_thres=ts_thres, same_user=same_user)
+                    .groupby("component")
+                    .apply(self.merge_msg)
+                    .reset_index()
+                    .apply(self.translate_msg_user, axis="columns")
+                )
+                ms["text"] = ms["text"].apply(
+                    emojize, use_aliases=True, variant="emoji_type"
+                )
+                ms["channel"] = self.channels.loc[channel]["id"]
         return ms
 
     def classify_msg(self, msg_df):
@@ -206,20 +217,20 @@ class CSDigest:
         return fpaths
 
     def build_carousel(self, msg_df):
-        indicator = self.temp.find("ol", class_="carousel-indicators")
-        ind_temp = indicator.find("li").extract()
-        sld_wrapper = self.temp.find("div", class_="carousel-inner")
-        tada_temp = self.temp.find("div", class_="carousel-tada-1").extract()
+        indicator = self.temp.find("ol", {"id": "carousel-inds"})
+        ind_temp = indicator.find("li", {"id": "carousel-ind-template"}).extract()
+        sld_wrapper = self.temp.find("div", {"id": "carousel-slides"})
+        tada_temp = self.temp.find("div", {"id": "carousel-slide-template"}).extract()
         for (imsg, msg), icss in zip(
             msg_df.reset_index(drop=True).iterrows(), itt.cycle(np.arange(3) + 1)
         ):
             cur_ind = copy.copy(ind_temp)
             cur_ind["data-slide-to"] = str(imsg)
             cur_tada = copy.copy(tada_temp)
-            cur_tada.find("h3").string = (
+            cur_tada.find("h3", {"id": "carousel-slide-message"}).string = (
                 msg["text"] if len(msg["text"]) <= 320 else msg["text"][:320] + "..."
             )
-            cur_tada.find(True, string="tada_author").string = msg["user"]
+            cur_tada.find(True, {"id": "carousel-slide-author"}).string = msg["user"]
             cur_tada.find("a")["href"] = msg["permalink"]
             if re.search("birthday", msg["text"].lower()):
                 cur_tada["class"] = [
