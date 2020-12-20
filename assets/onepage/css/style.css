@@ -932,7 +932,7 @@ a:hover {
 /* message block */
 .message-block {
   position: relative;
-  min-height: 457px;
+  min-height: 500px;
   height: auto;
   padding: 0 0 50px;
   z-index: 0;
