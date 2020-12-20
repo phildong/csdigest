@@ -14,6 +14,9 @@ cache
 # dataset used to train the network
 food-5k
 
+# network model
+/foodnet/model
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

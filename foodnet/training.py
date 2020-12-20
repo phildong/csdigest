@@ -43,7 +43,7 @@ model.compile(
 
 #%%
 # train model
-history = model.fit_generator(train_generator, validation_data=test_generator)
+history = model.fit_generator(train_generator, validation_data=test_generator, epochs=3)
 # %%
 # save model
 model.save("model")
