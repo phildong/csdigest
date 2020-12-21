@@ -4,13 +4,14 @@ import copy
 import itertools as itt
 import os
 import re
+from datetime import datetime
 
+import dateparser
 import numpy as np
 import pandas as pd
 import requests
 import tensorflow as tf
 import yaml
-import dateparser
 from bs4 import BeautifulSoup
 from emoji import emojize
 from keras import models
@@ -230,7 +231,12 @@ class CSDigest:
             cur_tada.find("h3", {"id": "carousel-slide-message"}).string = (
                 msg["text"] if len(msg["text"]) <= 320 else msg["text"][:320] + "..."
             )
-            cur_tada.find(True, {"id": "carousel-slide-author"}).string = msg["user"]
+            cur_tada.find(True, {"id": "carousel-slide-author"}).string = " ".join(
+                [
+                    msg["user"],
+                    datetime.fromtimestamp(float(msg["ts"])).strftime("%b %d"),
+                ]
+            )
             cur_tada.find("a")["href"] = msg["permalink"]
             if re.search("birthday", msg["text"].lower()):
                 cur_tada["class"] = [
@@ -251,7 +257,7 @@ class CSDigest:
             sld_wrapper.append(cur_tada)
 
     def write_html(self):
-        with open("csdigest.html", "w", encoding='utf-8') as outf:
+        with open("csdigest.html", "w", encoding="utf-8") as outf:
             outf.write(str(self.temp))
 
     def classify_food(self, img_path):
