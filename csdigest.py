@@ -4,8 +4,11 @@ import copy
 import itertools as itt
 import os
 import re
+import warnings
 from datetime import datetime
 
+warnings.filterwarnings("ignore")
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 import dateparser
 import numpy as np
 import pandas as pd
@@ -26,6 +29,7 @@ from slack_sdk import WebClient
 # csdigest class
 class CSDigest:
     def __init__(self, config_path) -> None:
+        print("loading data")
         # handling files
         with open(config_path) as cfg:
             config = yaml.load(cfg, Loader=yaml.FullLoader)
@@ -49,10 +53,12 @@ class CSDigest:
         self.users["display_name"] = self.users["profile"].apply(
             self.extract_profile, key="display_name"
         )
+        print("fetching messages")
         # get messages
         ms_general = self.get_msg("general", same_user=False)
         ms_home = self.get_msg("homesanity", ts_thres=0)
         ms_quote = self.get_msg("quotablequotes", ts_thres=120, same_user=False)
+        print("building newsletter")
         # handle carousel
         if len(ms_general) > 0:
             ms_general["class"] = ms_general.apply(self.classify_msg, axis="columns")
@@ -322,6 +328,6 @@ class CSDigest:
 #%%
 # main
 if __name__ == "__main__":
-    tf.logging.set_verbosity(tf.logging.ERROR)
+    tf.get_logger().setLevel("ERROR")
     digest = CSDigest("config.yml")
     digest.write_html()
