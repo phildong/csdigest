@@ -1,3 +1,3 @@
 token_path: ./token
 template_path: ./assets/template.html
-time_span: 2 months
+time_span: 12 months
