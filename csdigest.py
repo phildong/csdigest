@@ -93,7 +93,10 @@ class CSDigest:
             )["messages"]
         )
         if len(ms) > 0:
-            ms = ms[ms["subtype"].isnull()]
+            try:
+                ms = ms[ms["subtype"].isnull()]
+            except KeyError:
+                pass
             if len(ms) > 0:
                 ms = (
                     self.cluster_msg(ms, ts_thres=ts_thres, same_user=same_user)
@@ -201,7 +204,11 @@ class CSDigest:
     def download_images(self, msg_row):
         fpaths = []
         for fdict in msg_row["files"]:
-            if fdict["mimetype"].startswith("image"):
+            try:
+                mimietype = fdict["mimetype"]
+            except KeyError:
+                continue
+            if mimietype.startswith("image"):
                 fpath = os.path.join(
                     self.cache_im,
                     ".".join([fdict["id"], fdict["filetype"]]),
