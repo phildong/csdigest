@@ -274,7 +274,10 @@ class CSDigest:
             outf.write(str(self.temp))
 
     def classify_food(self, img_path):
-        imgs = [img_to_array(load_img(imp).resize((512, 512))) for imp in img_path]
+        try:
+            imgs = [img_to_array(load_img(imp).resize((512, 512))) for imp in img_path]
+        except:
+            return np.atleast_1d(np.ones(len(img_path))).tolist()
         predict = self.foodnet.predict(self.datagen.flow(np.stack(imgs)))
         return np.atleast_1d(predict.squeeze()).tolist()
 
