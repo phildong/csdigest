@@ -5,7 +5,7 @@ dependencies:
   - beautifulsoup4
   - tensorflow
   - keras
-  - python
+  - python=3.7
   - pandas
   - requests
   - scikit-learn
